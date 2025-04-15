@@ -1,1 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard - Advanced Content Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .cyber-gradient {
+            background: linear-gradient(135deg, #1a1b1f 0%, #2d2f36 100%);
+        }
+        .pulse-warning {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        button, input, optgroup, select, textarea {
+        padding: 0;
+        line-height: inherit;
+        color: #000000;
+        }
 
+        .analysis-result {
+            transition: all 0.3s ease;
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="cyber-gradient min-h-screen text-gray-100">
+    <!-- Navigation -->
+    <nav class="bg-black/50 backdrop-blur-lg fixed w-full z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
+                <div class="flex space-x-4">
+                    <a href="#analyze" class="nav-link active px-3 py-2 rounded-lg hover:bg-blue-600 transition-all">Text Analysis</a>
+                    <a href="#image" class="nav-link px-3 py-2 rounded-lg hover:bg-purple-600 transition-all">Image Detection</a>
+                    <a href="#complaint" class="nav-link px-3 py-2 rounded-lg hover:bg-red-600 transition-all">File Complaint</a>
+                    <a href="#feeds" class="nav-link px-3 py-2 rounded-lg hover:bg-green-600 transition-all">Social Feeds</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">CG</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-20 pb-12 px-4">
+      <!-- Text Analysis Section -->
+      <section id="analyze" class="content-section active max-w-4xl mx-auto">
+          <div class="bg-black/30 rounded-2xl p-6 shadow-2xl">
+              <h2 class="text-3xl font-bold mb-6">Content Analyzer</h2>
+              <form onsubmit="return analyzeText(event)">
+                  <textarea id="inputText" class="w-full bg-gray-800/50 rounded-lg p-4 min-h-[150px] focus:ring-2 focus:ring-blue-500 outline-none" 
+                            placeholder="Enter text to analyze..." required></textarea>
+                  <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold transition-all mt-4">
+                      <i class="fas fa-shield-alt mr-2"></i>Analyze Content
+                  </button>
+              </form>
+              <div id="results" class="result-section mt-8 space-y-4"></div>
+          </div>
+      </section>
+
+        <!-- Image Detection Section -->
+        <section id="image" class="content-section hidden max-w-4xl mx-auto">
+            <div class="bg-black/30 rounded-2xl p-6 shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6">Image Analysis</h2>
+                <div class="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center">
+                    <div class="max-w-md mx-auto">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="mb-4">Drag & drop or click to upload image</p>
+                        <input type="file" id="image-upload" class="hidden" accept="image/*">
+                        <label for="image-upload" class="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg cursor-pointer transition-all">Choose File</label>
+                    </div>
+                </div>
+                <div id="image-results" class="mt-8 space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- Complaint Section -->
+        <section id="complaint" class="content-section hidden max-w-4xl mx-auto">
+          <div class="bg-black/30 rounded-2xl p-6 shadow-2xl">
+              <h2 class="text-3xl font-bold mb-6">File Complaint</h2>
+              <form id="complaintForm" class="space-y-6" onsubmit="return submitComplaint(event)">
+                  <div class="grid md:grid-cols-2 gap-6">
+                      <div>
+                          <label class="block mb-2">Incident Date</label>
+                          <input type="date" id="incidentDate" name="date"
+                                 class="w-full bg-gray-800/50 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none" required>
+                      </div>
+                      <div>
+                          <label class="block mb-2">Platform</label>
+                          <select id="platform" name="platform" class="w-full bg-gray-800/50 rounded-lg p-3 focus:ring-2 focus:ring-red-500 outline-none" required>
+                              <option value="social">Social Media</option>
+                              <option value="email">Email</option>
+                              <option value="messaging">Messaging App</option>
+                          </select>
+                      </div>
+                  </div>
+                  
+                  <div>
+                      <label class="block mb-2">Description</label>
+                      <textarea id="description" name="description"
+                                class="w-full bg-gray-800/50 rounded-lg p-4 min-h-[150px] focus:ring-2 focus:ring-red-500 outline-none" 
+                                placeholder="Describe the incident..." required></textarea>
+                  </div>
+      
+                  <!-- Content Submission Section -->
+                  <div class="space-y-4">
+                      <div>
+                          <label class="block mb-2">Offensive Content</label>
+                          <textarea id="offensiveText" name="offensiveText"
+                                    class="w-full bg-gray-800/50 rounded-lg p-4 min-h-[100px]"
+                                    placeholder="Paste offensive text here"></textarea>
+                      </div>
+                      
+                      <div class="border-2 border-dashed border-gray-600 rounded-xl p-4 text-center">
+                          <input type="file" id="offensiveImage" name="image" class="hidden" accept="image/*" 
+                                 onchange="previewImage(event)">
+                          <label for="offensiveImage" class="cursor-pointer">
+                              <i class="fas fa-image text-2xl text-purple-400 mb-2"></i>
+                              <p class="text-gray-300">Upload Offensive Image (Optional)</p>
+                          </label>
+                          <div id="imagePreview" class="mt-2 max-w-xs mx-auto"></div>
+                      </div>
+                  </div>
+      
+                  <button type="submit" class="bg-red-600 hover:bg-red-700 px-8 py-3 rounded-lg font-semibold w-full">
+                      <i class="fas fa-file-pdf mr-2"></i>Generate Report & Submit
+                  </button>
+              </form>
+          </div>
+      </section>
+
+        <!-- Social Feeds Section -->
+      <section id="feeds" class="content-section hidden max-w-4xl mx-auto">
+        <div class="bg-black/30 rounded-2xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Social Monitoring</h2>
+                <div class="relative">
+                    <input type="text" id="feedSearch" placeholder="Search posts..." 
+                        class="bg-gray-800/50 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        oninput="loadFeeds(this.value)">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            <div class="space-y-6" id="feed-container">
+                <!-- Feed items will be dynamically loaded here -->
+            </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Status Indicators -->
+    <div id="upload-progress" class="hidden fixed bottom-4 right-4 bg-black/50 p-4 rounded-lg">
+      <div class="flex items-center gap-2">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span class="progress-text">Uploading...</span>
+      </div>
+    </div>
+
+    <div id="error-alert" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-900/80 px-6 py-3 rounded-lg border border-red-400">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span class="error-message"></span>
+    </div>
+
+    <script>
+        // Navigation handling
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                document.querySelector(e.target.hash).classList.remove('hidden');
+                
+                document.querySelectorAll('.nav-link').forEach(nav => {
+                    nav.classList.remove('active', 'bg-blue-600');
+                });
+                e.target.classList.add('active', 'bg-blue-600');
+            });
+        });
+
+        // Text analysis handler
+        function analyzeText(event) {
+            event.preventDefault();
+            const text = document.getElementById('inputText').value;
+            const resultsDiv = document.getElementById('results');
+            
+            resultsDiv.innerHTML = '<p class="text-gray-400">Analyzing... ⏳</p>';
+            
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            })
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <h2 class="text-2xl font-bold ${data.bullying_labels.length ? 'text-red-400' : 'text-green-400'}">
+                        ${data.verdict}
+                    </h2>
+                    <p class="mt-2"><strong class="text-blue-400">Confidence:</strong> ${data.confidence_grade}</p>
+                    <p class="mt-2"><strong class="text-blue-400">Summary:</strong> ${data.summary}</p>
+                    
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold mb-2">Detailed Analysis</h3>
+                        <p><strong class="text-blue-400">Language:</strong> ${data.language.toUpperCase()}</p>
+                        <p class="mt-2"><strong class="text-blue-400">Sentiment:</strong> 
+                            ${data.sentiment.label} (${(data.sentiment.score * 100).toFixed(1)}%)
+                        </p>
+                        
+                        <h4 class="text-lg font-bold mt-4 mb-2">Toxicity Scores</h4>
+                        <ul class="space-y-2">`;
+                
+                Object.entries(data.scores).forEach(([label, score]) => {
+                    html += `
+                            <li class="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
+                                <span>${label}</span>
+                                <span class="font-mono">${(score * 100).toFixed(1)}%</span>
+                            </li>`;
+                });
+
+                html += `</ul></div>`;
+                
+                resultsDiv.className = `result-section mt-8 space-y-4 ${
+                    data.bullying_labels.length ? 'toxic p-6 bg-red-900/20 rounded-xl border border-red-400/30' 
+                    : 'clean p-6 bg-green-900/20 rounded-xl border border-green-400/30'
+                }`;
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = '<p class="text-red-400">Error analyzing text. Please try again.</p>';
+                console.error('Error:', error);
+            });
+            
+            return false;
+        }
+
+        // Image analysis functionality
+        document.getElementById('image-upload').addEventListener('change', analyzeImage);
+
+        async function analyzeImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showError('Please upload a valid image file (JPG/PNG)');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showError('File size too large (max 5MB)');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('image-results');
+            resultsDiv.innerHTML = `
+                <div class="p-4 bg-gray-800/50 rounded-lg text-center">
+                    <i class="fas fa-spinner fa-spin"></i> Analyzing image...
+                </div>
+            `;
+
+            try {
+                document.getElementById('upload-progress').classList.remove('hidden');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Upload failed');
+                }
+
+                const data = await response.json();
+                event.target.value = '';
+
+                let html = `
+                    <div class="space-y-4">
+                        <h2 class="text-2xl font-bold ${data.bullying_labels.length ? 'text-red-400' : 'text-green-400'}">
+                            ${sanitize(data.verdict)}
+                        </h2>
+                        <p class="mt-2"><strong class="text-blue-400">Confidence:</strong> ${data.confidence_grade}</p>
+                        <div class="bg-gray-800/50 p-4 rounded-lg">
+                            <p class="text-sm"><strong>Extracted Text:</strong> ${sanitize(data.extracted_text)}</p>
+                        </div>
+                        <p class="mt-2"><strong class="text-blue-400">Summary:</strong> ${sanitize(data.summary)}</p>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-xl font-bold mb-2">Detailed Analysis</h3>
+                            <p><strong class="text-blue-400">Language:</strong> ${data.language.toUpperCase()}</p>
+                            
+                            <h4 class="text-lg font-bold mt-4 mb-2">Toxicity Scores</h4>
+                            <ul class="space-y-2">
+                `;
+
+                Object.entries(data.scores).forEach(([label, score]) => {
+                    html += `
+                                <li class="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
+                                    <span>${label}</span>
+                                    <span class="font-mono">${(score * 100).toFixed(1)}%</span>
+                                </li>`;
+                });
+
+                html += `
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                resultsDiv.innerHTML = html;
+                resultsDiv.className = `mt-8 space-y-4 ${
+                    data.bullying_labels.length ? 'p-6 bg-red-900/20 rounded-xl border border-red-400/30' 
+                    : 'p-6 bg-green-900/20 rounded-xl border border-green-400/30'
+                }`;
+
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="text-red-400 p-4 bg-red-900/20 rounded-lg">
+                        Error: ${sanitize(error.message)}
+                    </div>
+                `;
+            } finally {
+                document.getElementById('upload-progress').classList.add('hidden');
+            }
+        }
+
+        // Social feeds functionality
+        const mockFeeds = [
+            {
+                username: "@user123",
+                platform: "Twitter",
+                time: "2h ago",
+                content: "Just trying to mind my own business...",
+                verified: false
+            },
+            {
+                username: "@bully456",
+                platform: "Facebook",
+                time: "45m ago",
+                content: "You're worthless and should disappear!",
+                verified: true
+            },
+            {
+                username: "@random_user",
+                platform: "Instagram",
+                time: "5h ago",
+                content: "Why don't you go cry about it?",
+                verified: false
+            }
+        ];
+
+        function loadFeeds(query = '') {
+            const container = document.getElementById('feed-container');
+            container.innerHTML = '';
+            const feeds = query ? searchFeeds(query) : mockFeeds;
+
+            feeds.forEach((feed, index) => {
+                const feedHTML = `
+                    <div class="bg-gray-800/50 rounded-xl p-4" data-feed-id="${index}">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                                ${feed.verified ? '<i class="fas fa-check text-xs"></i>' : ''}
+                            </div>
+                            <div>
+                                <h4 class="font-semibold">${feed.username}</h4>
+                                <p class="text-sm text-gray-400">${feed.platform} • ${feed.time}</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-300">${feed.content}</p>
+                        <div class="mt-4 flex gap-4">
+                            <button class="text-red-400 hover:text-red-300" onclick="reportPost(${index})">
+                                <i class="fas fa-flag"></i> Report
+                            </button>
+                            <button class="text-blue-400 hover:text-blue-300 analyze-btn" 
+                                    onclick="analyzePost(${index})">
+                                <i class="fas fa-search"></i> Analyze
+                            </button>
+                        </div>
+                        <div id="result-${index}" class="analysis-result mt-3 hidden"></div>
+                    </div>
+                `;
+                container.innerHTML += feedHTML;
+            });
+        }
+
+        setInterval(loadFeeds, 10000); // Auto-refresh every 10 seconds (10,000 milliseconds)
+
+        function searchFeeds(query) {
+            return mockFeeds.filter(feed => 
+                feed.content.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+
+        async function analyzePost(postId) {
+            const postContent = mockFeeds[postId].content;
+            const resultDiv = document.getElementById(`result-${postId}`);
+            const button = document.querySelector(`[onclick="analyzePost(${postId})"]`);
+
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Analyzing';
+                resultDiv.classList.add('hidden');
+
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: postContent})
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="p-3 rounded-lg ${data.bullying_labels.length ? 'bg-red-900/20' : 'bg-green-900/20'}">
+                        <p class="${data.bullying_labels.length ? 'text-red-300' : 'text-green-300'}">
+                            ${data.verdict} (${data.confidence_grade})
+                        </p>
+                        ${data.summary ? `<p class="text-sm mt-1">${data.summary}</p>` : ''}
+                    </div>
+                `;
+
+                if (data.sentiment) {
+                    const sentimentData = [
+                        data.sentiment.positive * 100,
+                        data.sentiment.neutral * 100,
+                        data.sentiment.negative * 100
+                    ];
+                    createSentimentChart(sentimentData, postId);
+                }
+
+                resultDiv.classList.remove('hidden');
+
+            } catch (error) {
+                resultDiv.innerHTML = '<p class="text-red-400">Analysis failed</p>';
+                console.error('Analysis error:', error);
+            } finally {
+                button.innerHTML = '<i class="fas fa-search"></i> Analyze';
+            }
+        }
+
+        function createSentimentChart(sentimentData, postId) {
+            const ctx = document.createElement('canvas');
+            const container = document.getElementById(`result-${postId}`);
+            container.appendChild(ctx);
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: sentimentData,
+                        backgroundColor: [
+                            '#10B981',
+                            '#3B82F6',
+                            '#EF4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function reportPost(postId) {
+            alert(`Reported post ${postId + 1}`);
+        }
+
+        // Initialize feeds when page loads
+        document.addEventListener('DOMContentLoaded', loadFeeds);
+
+        // Helper functions
+        function sanitize(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showError(message) {
+            const errorAlert = document.getElementById('error-alert');
+            errorAlert.querySelector('.error-message').textContent = message;
+            errorAlert.classList.remove('hidden');
+            setTimeout(() => errorAlert.classList.add('hidden'), 5000);
+        }
+
+        // Complaint functionality
+        async function submitComplaint(event) {
+            event.preventDefault();
+            const form = event.target;
+            const button = form.querySelector('button');
+            
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                button.disabled = true;
+
+                const formData = new FormData(form);
+                const analysis = await analyzeContent();
+                formData.append('analysis', JSON.stringify(analysis));
+
+                const response = await fetch('/submit-complaint', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Server error');
+                }
+
+                const pdfBlob = await response.blob();
+                const url = window.URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `complaint_report_${Date.now()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+                console.error('Submission error:', error);
+            } finally {
+                button.innerHTML = '<i class="fas fa-file-pdf mr-2"></i>Generate Report & Submit';
+                button.disabled = false;
+            }
+        }
+
+        async function analyzeContent() {
+            const text = document.getElementById('offensiveText').value;
+            const imageFile = document.getElementById('offensiveImage').files[0];
+            
+            let analysis = { text: {}, image: {} };
+            
+            if (text) {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                analysis.text = await response.json();
+            }
+            
+            if (imageFile) {
+                const imageFormData = new FormData();
+                imageFormData.append('file', imageFile);
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: imageFormData
+                });
+                analysis.image = await response.json();
+            }
+            
+            return analysis;
+        }
+
+        function previewImage(event) {
+            const preview = document.getElementById('imagePreview');
+            const file = event.target.files[0];
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" 
+                             class="max-h-48 rounded-lg border border-purple-400/30"
+                             alt="Upload preview">
+                    `;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html>
